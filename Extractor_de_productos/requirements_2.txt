@@ -1,4 +1,4 @@
 pandas
 selenium
 beautifulsoup4
-webdriver-manager
+pytest

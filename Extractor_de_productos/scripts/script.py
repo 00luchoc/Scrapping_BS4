@@ -4,20 +4,19 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 import time
 import os
 
 # CONFIG GENERAL POR SUPERMERCADO
 CONFIG_SITIOS = {
     "DIA": {
-        "base_url": "https://diaonline.supermercadosdia.com.ar"
+        "base_url": "https://diaonline.supermercadosdia.com.ar/frescos"
     },
     "COTO": {
-        "base_url": "https://www.cotodigital.com.ar/sitios/cdigi/nuevositio"
+        "base_url": "https://www.cotodigital.com.ar/sitios/cdigi/categoria/catalogo-frescos-l%C3%A1cteos-leches/_/N-zpvqr7"
     },
     "Carrefour": {
-        "base_url": "https://www.carrefour.com.ar"
+        "base_url": "https://www.carrefour.com.ar/lacteos-y-productos-frescos"
     }
 }
 
@@ -29,7 +28,9 @@ def configurar_driver():
     options.add_argument("--start-maximized")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-    service = Service(ChromeDriverManager().install())
+    # ⬇️ Selenium WebDriver Manager automático
+    service = Service()
+
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
@@ -40,13 +41,11 @@ def parsear_pagina_vtex(driver, supermercado):
 
     time.sleep(2)
 
-    # 1) Selector principal: LINK de producto que contiene href y texto
     cards = driver.find_elements(
         By.XPATH,
         "//a[contains(@href,'/p') or contains(@href,'/producto') or contains(@href,'/product')]"
     )
 
-    # 2) Segundo intento (por si usan otra estructura)
     if not cards:
         print("[INFO] Segundo intento de búsqueda…")
         cards = driver.find_elements(
@@ -65,7 +64,6 @@ def parsear_pagina_vtex(driver, supermercado):
         except:
             continue
 
-        # Precio: cualquier elemento que contenga "$"
         try:
             precio_elem = card.find_element(
                 By.XPATH,
@@ -87,6 +85,7 @@ def parsear_pagina_vtex(driver, supermercado):
 
     return productos
 
+
 # PROCESO PRINCIPAL
 def main(termino_busqueda):
     print(f"--- Iniciando extracción para el término: '{termino_busqueda}' ---")
@@ -103,7 +102,6 @@ def main(termino_busqueda):
             driver.get(url_busqueda)
             time.sleep(4)
 
-            # Avisos
             print("\n[PAUSA] El script está en pausa.")
             print("        >> 1. Mira la ventana de Chrome.")
             if nombre_super == "COTO":
@@ -130,7 +128,6 @@ def main(termino_busqueda):
         driver.quit()
         print("\n[INFO] Navegador cerrado.")
 
-    # Guardar CSV
     if not todos_los_productos:
         print("\n[FINAL] No se extrajo ningún producto.")
         return
@@ -148,7 +145,7 @@ def main(termino_busqueda):
     print(f"Total de productos: {len(df)}")
     print(f"Archivo guardado en: {ruta_csv}")
 
-# ENTRY POINT
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Uso: python script.py \"leche\"")
